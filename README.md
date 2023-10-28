@@ -1,4 +1,6 @@
-# EPUB parser
+# ezpub
+
+An EPUB parser written in Rust, with support for both EPUB 2.0 and 3.0 versions.
 
 ## install
 `cargo add --git https://github.com/epubd/ezpub.git`
