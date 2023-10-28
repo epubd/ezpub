@@ -1,3 +1,6 @@
+![workflow]
+(https://github.com/epubd/ezpub/actions/workflows/rust.yml/badge.svg)
+
 # ezpub
 
 An EPUB parser written in Rust, with support for both EPUB 2.0 and 3.0 versions.
