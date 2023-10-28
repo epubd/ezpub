@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use regex::Regex;
 use roxmltree::Node;
 use serde::Serialize;
@@ -18,20 +18,18 @@ pub struct TocNode {
 impl Toc {
     pub(crate) fn from_nav_doc(doc: &str, base_path: &str) -> Result<Toc> {
         Ok(Toc {
-            contents: nav::parse(doc, base_path)?,
+            contents: nav_doc::parse(doc, base_path)?,
         })
     }
 
-    pub(crate) fn from_ncx(_doc: &str, _base_path: &str) -> Result<Toc> {
+    pub(crate) fn from_ncx(doc: &str, _base_path: &str) -> Result<Toc> {
         Ok(Toc {
-            contents: Vec::new(),
+            contents: ncx::parse(doc, _base_path)?,
         })
     }
 }
 
-mod nav {
-    use anyhow::anyhow;
-
+mod nav_doc {
     use super::*;
 
     pub(crate) fn parse(doc: &str, base_path: &str) -> Result<Vec<TocNode>> {
@@ -54,7 +52,7 @@ mod nav {
 
     fn parse_li(li_elem: Node, base_path: &str) -> TocNode {
         let a_elem = li_elem.children().find(|node| node.has_tag_name("a"));
-        let (title, path) = if let Some(a_elem) = a_elem {
+        let (title, href) = if let Some(a_elem) = a_elem {
             (
                 text_norm(&a_elem),
                 a_elem
@@ -82,7 +80,7 @@ mod nav {
 
         TocNode {
             title,
-            href: path,
+            href,
             children,
         }
     }
@@ -189,6 +187,126 @@ mod nav {
             let parsed = parse(doc, base_path).unwrap();
 
             assert_eq!(expected, parsed);
+        }
+    }
+}
+
+mod ncx {
+    use super::*;
+
+    pub fn parse(doc: &str, base_path: &str) -> Result<Vec<TocNode>> {
+        let doc = roxmltree::Document::parse(doc)?;
+        let nav_map_elem = doc
+            .descendants()
+            .find(|node| node.has_tag_name("navMap"))
+            .ok_or(anyhow!("`navMap` node not found"))?;
+
+        let toc_nodes = nav_map_elem
+            .children()
+            .filter(|node| node.has_tag_name("navPoint"))
+            .map(|node| parse_nav_point(&node, base_path))
+            .collect();
+
+        Ok(toc_nodes)
+    }
+
+    fn parse_nav_point(nav_point_elem: &Node, base_path: &str) -> TocNode {
+        let title = nav_point_elem
+            .children()
+            .find(|node| node.has_tag_name("navLabel"))
+            .map(|nav_label_elem| {
+                nav_label_elem
+                    .children()
+                    .find(|node| node.has_tag_name("text"))
+                    .map(|text_elem| text_elem.text())
+                    .flatten()
+            })
+            .flatten()
+            .unwrap_or_default()
+            .to_string();
+
+        let href = nav_point_elem
+            .children()
+            .find(|node| node.has_tag_name("content"))
+            .map(|content_elem| {
+                content_elem
+                    .attribute("src")
+                    .map(|str| format!("{}/{}", base_path, str))
+            })
+            .flatten();
+
+        let children: Vec<TocNode> = nav_point_elem
+            .children()
+            .filter(|node| node.has_tag_name("navPoint"))
+            .map(|node| parse_nav_point(&node, base_path))
+            .collect();
+
+        let children = if children.is_empty() {
+            None
+        } else {
+            Some(children)
+        };
+
+        TocNode {
+            title,
+            href,
+            children,
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn parse_ncx() {
+            let doc = r#"
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1" xml:lang="en-US">
+    <navMap>
+        <navPoint class="h1" id="ch1">
+            <navLabel>
+                <text>Chapter 1</text>
+            </navLabel>
+            <content src="content.html#ch_1"/>
+            <navPoint class="h2" id="ch_1_1">
+                <navLabel>
+                    <text>Chapter 1.1</text>
+                </navLabel>
+                <content src="content.html#ch_1_1"/>
+            </navPoint>
+        </navPoint>
+        <navPoint class="h1" id="ncx-2">
+            <navLabel>
+                <text>Chapter 2</text>
+            </navLabel>
+            <content src="content.html#ch_2"/>
+        </navPoint>
+    </navMap>
+</ncx>"#
+                .trim();
+
+            let base_path = "epub";
+
+            let expected = vec![
+                TocNode {
+                    title: String::from("Chapter 1"),
+                    href: Some(format!("{}/{}", base_path, "content.html#ch_1")),
+                    children: Some(vec![TocNode {
+                        title: String::from("Chapter 1.1"),
+                        href: Some(format!("{}/{}", base_path, "content.html#ch_1_1")),
+                        children: None,
+                    }]),
+                },
+                TocNode {
+                    title: String::from("Chapter 2"),
+                    href: Some(format!("{}/{}", base_path, "content.html#ch_2")),
+                    children: None,
+                },
+            ];
+
+            let parsed = parse(doc, base_path).unwrap();
+
+            assert_eq!(expected, parsed)
         }
     }
 }
