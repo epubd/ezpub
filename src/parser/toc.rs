@@ -11,7 +11,7 @@ pub struct Toc {
 #[derive(Debug, PartialEq, Serialize)]
 pub struct TocNode {
     pub title: String,
-    pub path: Option<String>,
+    pub href: Option<String>,
     pub children: Option<Vec<TocNode>>,
 }
 
@@ -82,7 +82,7 @@ mod nav {
 
         TocNode {
             title,
-            path,
+            href: path,
             children,
         }
     }
@@ -150,36 +150,36 @@ mod nav {
             let expected = vec![
                 TocNode {
                     title: String::from("Preface"),
-                    path: Some(format!("{}/{}", base_path, "preface.xhtml")),
+                    href: Some(format!("{}/{}", base_path, "preface.xhtml")),
                     children: None,
                 },
                 TocNode {
                     title: String::from("Jane Eyre"),
-                    path: Some(format!("{}/{}", base_path, "title-page.xhtml")),
+                    href: Some(format!("{}/{}", base_path, "title-page.xhtml")),
                     children: Some(vec![
                         TocNode {
                             title: String::from("Chapter 1"),
-                            path: Some(format!("{}/{}", base_path, "chapter-1.xhtml")),
+                            href: Some(format!("{}/{}", base_path, "chapter-1.xhtml")),
                             children: None,
                         },
                         TocNode {
                             title: String::from("Chapter 2"),
-                            path: Some(format!("{}/{}", base_path, "chapter-2.xhtml")),
+                            href: Some(format!("{}/{}", base_path, "chapter-2.xhtml")),
                             children: None,
                         },
                         TocNode {
                             title: String::from("Chapter 3"),
-                            path: Some(format!("{}/{}", base_path, "chapter-3.xhtml")),
+                            href: Some(format!("{}/{}", base_path, "chapter-3.xhtml")),
                             children: None,
                         },
                         TocNode {
                             title: String::from("Chapter 4"),
-                            path: Some(format!("{}/{}", base_path, "chapter-4.xhtml")),
+                            href: Some(format!("{}/{}", base_path, "chapter-4.xhtml")),
                             children: None,
                         },
                         TocNode {
                             title: String::from("Chapter 5"),
-                            path: None,
+                            href: None,
                             children: None,
                         },
                     ]),

@@ -45,7 +45,7 @@ pub struct Toc {
 #[derive(Debug, PartialEq, Serialize)]
 pub struct TocNode {
     pub title: String,
-    pub path: Option<String>,
+    pub href: Option<String>,
     pub children: Option<Vec<TocNode>>,
 }
 ```
