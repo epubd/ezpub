@@ -10,4 +10,7 @@ anyhow = "1.0.75"
 regex = "1.10.2"
 roxmltree = "0.18.1"
 zip = "0.6.6"
-serde = { version = "1.0.190", features = ["derive"] }
+serde = { version = "1.0.190", features = ["derive"], optional = true }
+
+[features]
+serde = ["dep:serde"]

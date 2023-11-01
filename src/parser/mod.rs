@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::fs::File;
 
 use anyhow::{anyhow, Result};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use zip::ZipArchive;
-use serde::Serialize;
 
 use crate::parser::container::Container;
 use crate::parser::package_document::PackageDocument;
@@ -21,7 +22,8 @@ pub struct Parser {
     archive: ZipArchive<File>,
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BookMeta {
     /// book title
     pub title: String,

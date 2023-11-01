@@ -1,14 +1,17 @@
 use anyhow::{anyhow, Result};
 use regex::Regex;
 use roxmltree::Node;
-use serde::Serialize;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Toc {
     pub contents: Vec<TocNode>,
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TocNode {
     pub title: String,
     pub href: Option<String>,
