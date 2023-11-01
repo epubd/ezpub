@@ -22,7 +22,7 @@ pub struct Parser {
     archive: ZipArchive<File>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BookMeta {
     /// book title
